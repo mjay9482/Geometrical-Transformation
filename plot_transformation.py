@@ -30,14 +30,13 @@ class Animation:
         self.ax0.set_title("SE3 Pose Transformation")
 
     def update_plot(self, i):
-        # Clear previous quivers
         for quiv in self.quivers:
             quiv.remove()
         self.quivers = []
 
         pos = self.poses[i].pos
         rot = self.poses[i].rot_mat
-        length = 1.0
+        length = 2.0
         
         origin = pos
         x_axis = rot[:, 0] * length

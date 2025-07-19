@@ -29,7 +29,7 @@ def main():
     poseA = SE3Pose(start, rot_i)
     poseB = SE3Pose(goal, rot_g)
 
-    in_between_pos = [poseA.interpolate(poseB,alpha) for alpha in np.linspace(0,1,200)]
+    in_between_pos = [poseA.interpolate(poseB,alpha) for alpha in np.linspace(0,1,100)]
 
     anim = Animation(in_between_pos)
     anim.animate()
