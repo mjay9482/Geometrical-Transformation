@@ -36,4 +36,16 @@ Imagine orientations as points on a sphere:
 - Maintains constant speed (angular velocity)  
 - Preserves rotational integrity at every intermediate step  
 
+## 🌀 Velocity Profiling
+
+Velocity profiling along a trajectory defined by interpolated poses.
+
+**Pose profiling** tells you where you are and how you're oriented.
+**Velocity profiling** tells you how fast and in which direction you're moving.
+
+ - Without velocity: a trajectory is just waypoints
+ - With velocity: we can ensure smoothness, obey speed constraints, and avoid jerky movements
+
+This emulates velocity profiling in action, adding a nonlinear time law to control how interpolation progresses.
+
 ![Transformation Animation](assets/transformation.gif)
