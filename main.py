@@ -24,35 +24,48 @@ def velocity_profile(n):
     return (sigmoid - sigmoid.min()) / (sigmoid.max() - sigmoid.min())  
 
 def main():
-    start = np.array([-1, -1, 1])
-    rot_i = np.array([[1, -0.4, 0.1],
-                      [0, 0.6, 1],
-                      [0.2, 1, 0]])
-    goal = np.array([3, 3, 3])
-    rot_g = np.array([[1, 0, -1],
-                      [-0.5, 1, 1],
-                      [0, -1, 0.5]])
+    waypoints = np.array([[-1, 1, 1],[1, 4, 1],[1, -2, 1],[4, -2, 1]])
+    rotations = np.array([[
+                          [1, -0.4, 0.1],
+                          [0, 0.6, 1],
+                          [0.2, 1, 0]],
+                          
+                          [[1, 0.4, 0.1],
+                          [0, -0.6, 1],
+                          [0.34, 1, 0]],
+                          
+                          [[-1, -0.4, 0.1],
+                          [0, 0.6, -1],
+                          [0.7, 1, 0]],
+                          
+                          [[1, 0, -1],
+                          [-0.5, 1, 1],
+                          [0, -1, 0.5]]])
+    
+    n = len(waypoints)
+    trajectory = [] 
+    for i in range(n-1):
+        pose_i = SE3Pose(waypoints[i],rotations[i])
+        pose_next_i = SE3Pose(waypoints[(i+1)%n],rotations[(i+1)%n])
+        
+        n = 100 
+        alphas = velocity_profile(n)
+        in_between_pose = [pose_i.interpolate(pose_next_i, alpha) for alpha in alphas]
+        dt = 1.0/n 
+        
+        for i in range(1, n-1):
+            vel = (in_between_pose[i+1].pos - in_between_pose[i-1].pos) / (2*dt)
+            in_between_pose[i].velocity = vel
 
-    poseA = SE3Pose(start, rot_i)
-    poseB = SE3Pose(goal, rot_g)
-
-    n = 100
-    alphas = velocity_profile(n)  
-    in_between_pos = [poseA.interpolate(poseB, alpha) for alpha in alphas]
-
-    dt = 1.0 / n
-
-    for i in range(1, n - 1):
-        v = (in_between_pos[i + 1].pos - in_between_pos[i - 1].pos) / (2 * dt)
-        in_between_pos[i].velocity = v
-
-    in_between_pos[0].velocity = (in_between_pos[1].pos - in_between_pos[0].pos) / dt
-    in_between_pos[-1].velocity = (in_between_pos[-1].pos - in_between_pos[-2].pos) / dt
-
-    for pose in in_between_pos:
-        pose.speed = np.linalg.norm(pose.velocity)
-
-    anim = Animation(in_between_pos)
+        in_between_pose[0].velocity = (in_between_pose[1].pos - in_between_pose[0].pos) / dt 
+        in_between_pose[-1].velocity = (in_between_pose[-1].pos - in_between_pose[-2].pos) / dt 
+        
+        for pose in in_between_pose:
+            pose.speed = np.linalg.norm(pose.velocity) 
+        
+        trajectory.extend(in_between_pose)
+        
+    anim = Animation(trajectory)
     anim.animate()
 
 if __name__ == "__main__":

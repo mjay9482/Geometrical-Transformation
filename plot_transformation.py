@@ -20,9 +20,9 @@ class Animation:
         
     def setup_plot(self):
         self.ax0.set_facecolor('black')
-        self.ax0.set_xlim(-2, 4)
-        self.ax0.set_ylim(-2, 4)
-        self.ax0.set_zlim(-2, 4)
+        self.ax0.set_xlim(-3, 4)
+        self.ax0.set_ylim(-3, 4)
+        self.ax0.set_zlim(-3, 4)
         self.ax0.set_xlabel('X')
         self.ax0.set_ylabel('Y')
         self.ax0.set_zlabel('Z')
@@ -52,7 +52,6 @@ class Animation:
         self.quivers.append(self.ax0.quiver(*origin, *y_axis, color='g', linewidth=2))
         self.quivers.append(self.ax0.quiver(*origin, *z_axis, color='b', linewidth=2))
 
-        # Add velocity vector (magenta)
         self.quivers.append(self.ax0.quiver(*origin, *vel, color='m', linewidth=1.5))
 
         return self.quivers
@@ -62,7 +61,7 @@ class Animation:
         speeds = np.array([pose.speed for pose in self.poses])
 
         norm_speeds = (speeds - speeds.min()) / (speeds.max() - speeds.min() + 1e-6)
-        cmap = cm.get_cmap("jet")  # Or "plasma", "viridis", etc.
+        cmap = cm.get_cmap("jet")  
 
         for i in range(len(positions) - 1):
             p1 = positions[i]
@@ -78,7 +77,6 @@ class Animation:
         cbar.set_label("Speed Magnitude", color='white')
         cbar.ax.yaxis.set_tick_params(color='white')
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
-
 
     def animate(self, save=True):
         ani = animation.FuncAnimation(
