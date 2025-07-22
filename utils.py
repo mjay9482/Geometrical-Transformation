@@ -54,3 +54,39 @@ def slerp(q0,q1,t):
     w0 = np.sin((1-t)*omega)/sin_omega 
     w1 = np.sin(t*omega)/sin_omega
     return w0*q0 + w1*q1
+
+def quat_conjugate(q):
+    return np.array([-q[0], -q[1], -q[2], q[3]])
+
+def quat_mul(q, r):
+    x1, y1, z1, w1 = q
+    x2, y2, z2, w2 = r
+    return np.array([
+        w1*x2 + x1*w2 + y1*z2 - z1*y2,
+        w1*y2 - x1*z2 + y1*w2 + z1*x2,
+        w1*z2 + x1*y2 - y1*x2 + z1*w2,
+        w1*w2 - x1*x2 - y1*y2 - z1*z2
+    ])
+    
+    
+def velocity_profile(num_steps):
+    t = np.linspace(-0.5, 0.5, num_steps)
+    sigmoid = 1 / (1 + np.exp(-t))
+    return (sigmoid - sigmoid.min()) / (sigmoid.max() - sigmoid.min())
+
+
+def catmull_rom_point(P0, P1, P2, P3, τ):
+    return 0.5 * (
+        (2*P1) +
+        (P2 - P0)*τ +
+        (2*P0 - 5*P1 + 4*P2 - P3)*(τ**2) +
+        (-P0 + 3*P1 - 3*P2 + P3)*(τ**3)
+    )
+
+
+def catmull_rom_derivative(P0, P1, P2, P3, τ):
+    return 0.5 * (
+        (P2 - P0) +
+        2*(2*P0 - 5*P1 + 4*P2 - P3)*τ +
+        3*(-P0 + 3*P1 - 3*P2 + P3)*(τ**2)
+    )

@@ -2,35 +2,19 @@ import numpy as np
 from utils import *
 from plot_transformation import Animation
 
-class SE3Pose: 
-    def __init__(self, pos, rot_mat=None, velocity=None):
+class SE3Pose:
+    def __init__(self, pos, rot_mat, linear_vel=None, angular_vel=None):
         self.pos = np.array(pos)
-        self.rot_mat = rot_mat if rot_mat is not None else np.eye(3)
-        self.velocity = np.array(velocity) if velocity is not None else np.zeros(3)
-        self.speed = np.linalg.norm(self.velocity)
+        self.rot_mat = np.array(rot_mat)
+        self.linear_velocity = np.zeros(3) if linear_vel is None else linear_vel
+        self.angular_velocity = np.zeros(3) if angular_vel is None else angular_vel
+        self.speed = np.linalg.norm(self.linear_velocity)
 
     def __repr__(self):
-        return f"Pose={self.pos} Velocity={self.velocity}"
+        lv = np.round(self.linear_velocity, 3)
+        av = np.round(self.angular_velocity, 3)
+        return f"Pose={self.pos} LinVel={lv} AngVel={av}"
 
-def velocity_profile(num_steps):
-    t = np.linspace(-0.5, 0.5, num_steps)
-    sigmoid = 1 / (1 + np.exp(-t))
-    return (sigmoid - sigmoid.min()) / (sigmoid.max() - sigmoid.min())
-
-def catmull_rom_point(P0, P1, P2, P3, τ):
-    return 0.5 * (
-        (2*P1) +
-        (P2 - P0)*τ +
-        (2*P0 - 5*P1 + 4*P2 - P3)*(τ**2) +
-        (-P0 + 3*P1 - 3*P2 + P3)*(τ**3)
-    )
-
-def catmull_rom_derivative(P0, P1, P2, P3, τ):
-    return 0.5 * (
-        (P2 - P0) +
-        2*(2*P0 - 5*P1 + 4*P2 - P3)*τ +
-        3*(-P0 + 3*P1 - 3*P2 + P3)*(τ**2)
-    )
 
 def main():
     waypoints = np.array([
@@ -39,6 +23,7 @@ def main():
         [ 1, -2, 1],
         [ 4, -2, 1]
     ])
+
     rotations = np.array([
         [[ 1,  -0.4, 0.1],
          [ 0,   0.6, 1. ],
@@ -58,38 +43,42 @@ def main():
     ])
 
     N = waypoints.shape[0]
-    steps_per_segment = 100
-    dt = 1.0 / steps_per_segment
-    alphas = velocity_profile(steps_per_segment)
+    steps = 100
+    dt = 1.0 / steps
+    alphas = velocity_profile(steps)
 
-    alpha_dots = np.empty_like(alphas)
-    alpha_dots[1:-1] = (alphas[2:] - alphas[:-2]) / (2 * dt)
-    alpha_dots[0]     = (alphas[1] - alphas[0])   / dt
-    alpha_dots[-1]    = (alphas[-1] - alphas[-2]) / dt
+    alpha_dot = np.empty_like(alphas)
+    alpha_dot[1:-1] = (alphas[2:] - alphas[:-2]) / (2*dt)
+    alpha_dot[0]     = (alphas[1] - alphas[0])   / dt
+    alpha_dot[-1]    = (alphas[-1] - alphas[-2]) / dt
 
     trajectory = []
     for i in range(N - 1):
         P1 = waypoints[i]
-        P2 = waypoints[i+1]
-        P0 = waypoints[i-1] if i-1 >= 0 else P1
-        P3 = waypoints[i+2] if i+2 < N else P2
+        P2 = waypoints[i + 1]
+        P0 = waypoints[i - 1] if i > 0     else P1
+        P3 = waypoints[i + 2] if i + 2 < N  else P2
 
         R1 = rotations[i]
-        R2 = rotations[i+1]
+        R2 = rotations[i + 1]
 
-        for j, α in enumerate(alphas):
-
-            pos = catmull_rom_point(P0, P1, P2, P3, α)
-            dp_dα = catmull_rom_derivative(P0, P1, P2, P3, α)
-            velocity = dp_dα * alpha_dots[j]
+        for j, alpha in enumerate(alphas):
+            pos = catmull_rom_point(P0, P1, P2, P3, alpha)
+            Jp = catmull_rom_derivative(P0, P1, P2, P3, alpha)
+            lin_vel = Jp * alpha_dot[j]
 
             q1 = rotation_matrix_to_quaternion(R1)
             q2 = rotation_matrix_to_quaternion(R2)
-            q_interp = slerp(q1, q2, α)
-            rot = quaternion_to_rotation_matrix(q_interp)
+            q = slerp(q1, q2, alpha)
+            delta = 1e-3
+            qp = slerp(q1, q2, min(alpha + delta, 1.0))
+            qm = slerp(q1, q2, max(alpha - delta, 0.0))
+            dq_dalpha = (qp - qm) / (2 * delta)
+            omega_quat = 2 * quat_mul(dq_dalpha, quat_conjugate(q))
+            ang_vel = omega_quat[:3] * alpha_dot[j]
 
-            pose = SE3Pose(pos, rot, velocity)
-            trajectory.append(pose)
+            rot = quaternion_to_rotation_matrix(q)
+            trajectory.append(SE3Pose(pos, rot, linear_vel=lin_vel, angular_vel=ang_vel))
 
     anim = Animation(trajectory)
     anim.animate()

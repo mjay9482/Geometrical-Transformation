@@ -40,7 +40,8 @@ class Animation:
 
         pos = self.poses[i].pos
         rot = self.poses[i].rot_mat
-        vel = self.poses[i].velocity
+        lin_vel = self.poses[i].linear_velocity
+        ang_vel = self.poses[i].angular_velocity
 
         length = 2.0
         origin = pos
@@ -52,7 +53,8 @@ class Animation:
         self.quivers.append(self.ax0.quiver(*origin, *y_axis, color='g', linewidth=2))
         self.quivers.append(self.ax0.quiver(*origin, *z_axis, color='b', linewidth=2))
 
-        self.quivers.append(self.ax0.quiver(*origin, *vel, color='m', linewidth=1.5))
+        self.quivers.append(self.ax0.quiver(*origin, *lin_vel, color='m', linewidth=1.5))
+        self.quivers.append(self.ax0.quiver(*origin, *ang_vel, color='y', linewidth=1.5))
 
         return self.quivers
 
