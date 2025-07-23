@@ -65,7 +65,7 @@ def main():
         for j, alpha in enumerate(alphas):
             pos = catmull_rom_point(P0, P1, P2, P3, alpha)
             Jp = catmull_rom_derivative(P0, P1, P2, P3, alpha)
-            lin_vel = Jp * alpha_dot[j]
+            lin_vel = Jp * alpha_dot[j]                # v = d(pos)/dt = d(pos)/d(alpha) × d(alpha)/dt = Jp × alpha_dot
 
             q1 = rotation_matrix_to_quaternion(R1)
             q2 = rotation_matrix_to_quaternion(R2)
@@ -74,7 +74,7 @@ def main():
             qp = slerp(q1, q2, min(alpha + delta, 1.0))
             qm = slerp(q1, q2, max(alpha - delta, 0.0))
             dq_dalpha = (qp - qm) / (2 * delta)
-            omega_quat = 2 * quat_mul(dq_dalpha, quat_conjugate(q))
+            omega_quat = 2 * quat_mul(dq_dalpha, quat_conjugate(q))       # w = 2 * (dq/dt) * q^(-1)
             ang_vel = omega_quat[:3] * alpha_dot[j]
 
             rot = quaternion_to_rotation_matrix(q)

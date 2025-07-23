@@ -1,4 +1,3 @@
-
 import numpy as np 
 
 def rotation_matrix_to_quaternion(R):
@@ -68,25 +67,23 @@ def quat_mul(q, r):
         w1*w2 - x1*x2 - y1*y2 - z1*z2
     ])
     
-    
 def velocity_profile(num_steps):
     t = np.linspace(-0.5, 0.5, num_steps)
     sigmoid = 1 / (1 + np.exp(-t))
     return (sigmoid - sigmoid.min()) / (sigmoid.max() - sigmoid.min())
 
-
-def catmull_rom_point(P0, P1, P2, P3, τ):
+def catmull_rom_point(P0, P1, P2, P3, t):
     return 0.5 * (
         (2*P1) +
-        (P2 - P0)*τ +
-        (2*P0 - 5*P1 + 4*P2 - P3)*(τ**2) +
-        (-P0 + 3*P1 - 3*P2 + P3)*(τ**3)
+        (P2 - P0)*t +
+        (2*P0 - 5*P1 + 4*P2 - P3)*(t**2) +
+        (-P0 + 3*P1 - 3*P2 + P3)*(t**3)
     )
 
 
-def catmull_rom_derivative(P0, P1, P2, P3, τ):
+def catmull_rom_derivative(P0, P1, P2, P3, t):
     return 0.5 * (
         (P2 - P0) +
-        2*(2*P0 - 5*P1 + 4*P2 - P3)*τ +
-        3*(-P0 + 3*P1 - 3*P2 + P3)*(τ**2)
+        2*(2*P0 - 5*P1 + 4*P2 - P3)*t +
+        3*(-P0 + 3*P1 - 3*P2 + P3)*(t**2)
     )
